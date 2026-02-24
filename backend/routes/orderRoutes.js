@@ -1,14 +1,15 @@
 const router = require("express").Router();
 const Order = require("../models/Order");
+const Book = require("../models/Book"); // ✅ import Book model
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 
-// 🧪 Test route (debug)
+// 🧪 Test route
 router.get("/test", (req, res) => {
   res.json({ ok: true, message: "Orders route working" });
 });
 
-// 🛒 Place order (login required)
+// 🛒 Place order + reduce stock
 router.post("/", auth, async (req, res) => {
   try {
     const { items, address, total } = req.body;
@@ -17,6 +18,27 @@ router.post("/", auth, async (req, res) => {
       return res.status(400).json({ message: "Invalid order data" });
     }
 
+    // 1️⃣ Check stock for each book
+    for (const i of items) {
+      const book = await Book.findById(i.bookId);
+      if (!book) {
+        return res.status(404).json({ message: `Book not found: ${i.title}` });
+      }
+      if (book.stock < i.qty) {
+        return res.status(400).json({
+          message: `Only ${book.stock} left for "${book.title}"`,
+        });
+      }
+    }
+
+    // 2️⃣ Reduce stock
+    for (const i of items) {
+      await Book.findByIdAndUpdate(i.bookId, {
+        $inc: { stock: -i.qty },
+      });
+    }
+
+    // 3️⃣ Save order
     const order = await Order.create({
       user: {
         id: req.user.id,
@@ -36,10 +58,9 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-// 👤 User: get my orders (login required)
+// 👤 User: get my orders
 router.get("/my/:userId", auth, async (req, res) => {
   try {
-    // Ensure user can only access their own orders
     if (req.user.id !== req.params.userId && req.user.role !== "Admin") {
       return res.status(403).json({ message: "Access denied" });
     }
@@ -50,7 +71,6 @@ router.get("/my/:userId", auth, async (req, res) => {
 
     res.json(orders);
   } catch (err) {
-    console.error("Fetch my orders error:", err);
     res.status(500).json({ message: "Failed to fetch orders" });
   }
 });
@@ -61,8 +81,7 @@ router.get("/", auth, admin, async (req, res) => {
     const orders = await Order.find().sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
-    console.error("Fetch all orders error:", err);
-    res.status(500).json({ message: "Failed to fetch all orders" });
+    res.status(500).json({ message: "Failed to fetch orders" });
   }
 });
 
@@ -84,7 +103,6 @@ router.put("/:id/status", auth, admin, async (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    console.error("Update status error:", err);
     res.status(500).json({ message: "Failed to update status" });
   }
 });
