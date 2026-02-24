@@ -1,0 +1,38 @@
+.login-page {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Background Image */
+  background-image: url("../assets/bg-bookstore.avif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.login-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55); /* dark overlay */
+  z-index: 1;
+}
+
+.login-card {
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+  padding: 30px;
+  width: 340px;
+  border-radius: 12px;
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+/* rest remains same */
+.login-card h2 { margin-bottom: 20px; color: #333; }
+.login-card input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
+.login-card button { width: 100%; padding: 10px; margin-top: 10px; background: #667eea; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+.login-card p { margin-top: 15px; }
+.login-card a { color: #667eea; text-decoration: none; }
