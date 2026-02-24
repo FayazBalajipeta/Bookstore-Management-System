@@ -22,8 +22,19 @@ const orderSchema = new mongoose.Schema(
       state: String,
       pincode: String,
     },
-    total: Number,
-    status: { type: String, default: "Pending" },
+    phone: {
+      type: String,
+      required: true, // ✅ phone number required for delivery
+    },
+    total: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      default: "Pending",
+      enum: ["Pending", "Shipped", "Delivered", "Cancelled"], // ✅ restrict values
+    },
   },
   { timestamps: true }
 );

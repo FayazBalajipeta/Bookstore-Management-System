@@ -18,6 +18,8 @@ export default function Checkout() {
     pincode: "",
   });
 
+  const [phone, setPhone] = useState("");
+
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
 
   const placeOrder = async () => {
@@ -36,8 +38,13 @@ export default function Checkout() {
       return;
     }
 
+    if (!phone || phone.length < 10) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+
     try {
-      await axios.post(
+      const res = await axios.post(
         "http://localhost:5000/api/orders",
         {
           items: cart.map((i) => ({
@@ -53,7 +60,8 @@ export default function Checkout() {
             state: address.state,
             pincode: address.pincode,
           },
-          total: Number(total), // ✅ ensure number
+          phone,
+          total: Number(total),
         },
         {
           headers: {
@@ -64,7 +72,9 @@ export default function Checkout() {
 
       toast.success("Order placed successfully 🎉");
       clearCart();
-      navigate("/orders");
+
+      // ✅ Redirect to success page with order id
+      navigate("/success", { state: { orderId: res.data._id } });
     } catch (err) {
       console.error("Place order error:", err);
       toast.error(err.response?.data?.message || "Failed to place order");
@@ -80,6 +90,7 @@ export default function Checkout() {
         <div className="checkout-grid">
           <div className="address-box">
             <h3>Shipping Address</h3>
+
             <input
               placeholder="Address Line"
               value={address.line1}
@@ -102,10 +113,17 @@ export default function Checkout() {
                 setAddress({ ...address, pincode: e.target.value })
               }
             />
+
+            <input
+              placeholder="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
           </div>
 
           <div className="summary-box">
             <h3>Order Summary</h3>
+
             {cart.map((i) => (
               <div key={i._id} className="summary-item">
                 <span>
@@ -114,6 +132,7 @@ export default function Checkout() {
                 <span>₹{i.price * i.qty}</span>
               </div>
             ))}
+
             <hr />
             <h4>Total: ₹{total}</h4>
 

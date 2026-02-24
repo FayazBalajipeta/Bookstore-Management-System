@@ -2,34 +2,33 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import "./MyOrders.css";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
-
-  const userId = user?._id || user?.id; // ✅ support both
+  const navigate = useNavigate();
 
   const fetchMyOrders = useCallback(async () => {
     try {
-      if (!userId) {
+      if (!user?.id) {
         toast.error("User not found. Please login again.");
         return;
       }
 
       const res = await axios.get(
-        `http://localhost:5000/api/orders/my/${userId}`,
+        `http://localhost:5000/api/orders/my/${user.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       setOrders(res.data);
     } catch (err) {
-      console.error("Load my orders error:", err);
-      toast.error(err.response?.data?.message || "Failed to load your orders");
+      toast.error("Failed to load your orders");
     }
-  }, [token, userId]);
+  }, [token, user?.id]);
 
   useEffect(() => {
     fetchMyOrders();
@@ -52,6 +51,7 @@ export default function MyOrders() {
                 <strong>Date:</strong>{" "}
                 {new Date(o.createdAt).toLocaleString()}
               </div>
+
               <span className={`status ${o.status.toLowerCase()}`}>
                 {o.status}
               </span>
@@ -69,6 +69,16 @@ export default function MyOrders() {
             </div>
 
             <div className="total">Total: ₹{o.total}</div>
+
+            {/* ✏️ EDIT BUTTON → Redirect to Edit Page */}
+            {["Pending", "Shipped"].includes(o.status) && (
+              <button
+                className="edit-btn"
+                onClick={() => navigate(`/orders/${o._id}/edit`)}
+              >
+                ✏️ Edit Delivery Details
+              </button>
+            )}
           </div>
         ))}
       </div>

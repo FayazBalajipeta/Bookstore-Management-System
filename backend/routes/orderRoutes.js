@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const Order = require("../models/Order");
-const Book = require("../models/Book"); // ✅ import Book model
+const Book = require("../models/Book");
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 
@@ -12,13 +12,12 @@ router.get("/test", (req, res) => {
 // 🛒 Place order + reduce stock
 router.post("/", auth, async (req, res) => {
   try {
-    const { items, address, total } = req.body;
+    const { items, address, phone, total } = req.body;
 
-    if (!items?.length || !address || !total) {
+    if (!items?.length || !address || !phone || !total) {
       return res.status(400).json({ message: "Invalid order data" });
     }
 
-    // 1️⃣ Check stock for each book
     for (const i of items) {
       const book = await Book.findById(i.bookId);
       if (!book) {
@@ -31,14 +30,10 @@ router.post("/", auth, async (req, res) => {
       }
     }
 
-    // 2️⃣ Reduce stock
     for (const i of items) {
-      await Book.findByIdAndUpdate(i.bookId, {
-        $inc: { stock: -i.qty },
-      });
+      await Book.findByIdAndUpdate(i.bookId, { $inc: { stock: -i.qty } });
     }
 
-    // 3️⃣ Save order
     const order = await Order.create({
       user: {
         id: req.user.id,
@@ -47,6 +42,7 @@ router.post("/", auth, async (req, res) => {
       },
       items,
       address,
+      phone,
       total,
       status: "Pending",
     });
@@ -75,6 +71,61 @@ router.get("/my/:userId", auth, async (req, res) => {
   }
 });
 
+// 🔍 Get single order (for Edit page)
+router.get("/:id", auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    const isOwner = order.user.id === req.user.id;
+    const isAdmin = req.user.role === "Admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch order" });
+  }
+});
+
+// ✏️ Edit delivery details (User or Admin)
+router.put("/:id/edit", auth, async (req, res) => {
+  try {
+    const { address, phone } = req.body;
+
+    if (!address && !phone) {
+      return res.status(400).json({ message: "Nothing to update" });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    const isOwner = order.user.id === req.user.id;
+    const isAdmin = req.user.role === "Admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+    if (["Delivered", "Cancelled"].includes(order.status)) {
+      return res.status(400).json({
+        message: "Cannot edit delivery details after delivery or cancellation",
+      });
+    }
+
+    if (address) order.address = address;
+    if (phone) order.phone = phone;
+
+    await order.save();
+    res.json(order);
+  } catch (err) {
+    console.error("Edit order error:", err);
+    res.status(500).json({ message: "Failed to update order details" });
+  }
+});
+
 // 👑 Admin: get all orders
 router.get("/", auth, admin, async (req, res) => {
   try {
@@ -85,24 +136,30 @@ router.get("/", auth, admin, async (req, res) => {
   }
 });
 
-// 👑 Admin: update order status
+// 👑 Admin: update order status + restore stock on cancel
 router.put("/:id/status", auth, admin, async (req, res) => {
   try {
     const { status } = req.body;
-
     const allowed = ["Pending", "Shipped", "Delivered", "Cancelled"];
     if (!allowed.includes(status)) {
       return res.status(400).json({ message: "Invalid status value" });
     }
 
-    const updated = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-    res.json(updated);
+    if (status === "Cancelled" && order.status !== "Cancelled") {
+      for (const i of order.items) {
+        await Book.findByIdAndUpdate(i.bookId, { $inc: { stock: i.qty } });
+      }
+    }
+
+    order.status = status;
+    await order.save();
+
+    res.json(order);
   } catch (err) {
+    console.error("Update status error:", err);
     res.status(500).json({ message: "Failed to update status" });
   }
 });

@@ -11,6 +11,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminOrders from "./pages/AdminOrders";
 import MyOrders from "./pages/MyOrders";
+import EditOrder from "./pages/EditOrder";
+import OrderSuccess from "./pages/OrderSuccess";
 function App() {
   return (
     <BrowserRouter>
@@ -54,6 +56,15 @@ function App() {
      </ProtectedRoute>
    }
  />
+<Route
+  path="/success"
+  element={
+    <ProtectedRoute>
+      <OrderSuccess />
+    </ProtectedRoute>
+  }
+/>
+ <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
         {/* 👑 Admin only */}
         <Route
           path="/admin"
