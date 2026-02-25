@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
 export default function Home() {
@@ -12,6 +13,7 @@ export default function Home() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -121,10 +123,27 @@ export default function Home() {
           <div className="book-grid">
             {filtered.map((b) => (
               <div key={b._id} className="book-card">
-                <img src={b.image} alt={b.title} />
-                <h4>{b.title}</h4>
+                {/* 👉 Click to open details */}
+                <img
+                  src={b.image}
+                  alt={b.title}
+                  onClick={() => navigate(`/books/${b._id}`)}
+                  style={{ cursor: "pointer" }}
+                />
+
+                <h4
+                  onClick={() => navigate(`/books/${b._id}`)}
+                  style={{ cursor: "pointer" }}
+                >
+                  {b.title}
+                </h4>
+
                 <p className="author">{b.author}</p>
                 <span className="genre">{b.genre}</span>
+
+                {/* ⭐ Average rating */}
+                <p>⭐ {b.avgRating ? b.avgRating.toFixed(1) : "0.0"} / 5</p>
+
                 <p className="price">₹{b.price}</p>
                 <button onClick={() => addToCart(b)}>Add to Cart</button>
               </div>

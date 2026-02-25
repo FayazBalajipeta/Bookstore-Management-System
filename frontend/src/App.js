@@ -13,12 +13,14 @@ import AdminOrders from "./pages/AdminOrders";
 import MyOrders from "./pages/MyOrders";
 import EditOrder from "./pages/EditOrder";
 import OrderSuccess from "./pages/OrderSuccess";
+import BookDetails from "./pages/BookDetails"; // ⭐ NEW
+
 function App() {
   return (
     <BrowserRouter>
       <ToastContainer />
       <Routes>
-        {/* Public routes */}
+        {/* 🌍 Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -32,6 +34,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/checkout"
           element={
@@ -40,37 +43,52 @@ function App() {
             </ProtectedRoute>
           }
         />
- <Route
-   path="/admin/orders"
-   element={
-     <AdminRoute>
-       <AdminOrders />
-    </AdminRoute>
-  }
- />
-  <Route
-   path="/orders"
-   element={
-     <ProtectedRoute>
-       <MyOrders />
-     </ProtectedRoute>
-   }
- />
-<Route
-  path="/success"
-  element={
-    <ProtectedRoute>
-      <OrderSuccess />
-    </ProtectedRoute>
-  }
-/>
- <Route path="/orders/:id/edit" element={<ProtectedRoute><EditOrder /></ProtectedRoute>} />
+
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <MyOrders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/orders/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditOrder />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/success"
+          element={
+            <ProtectedRoute>
+              <OrderSuccess />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 📚 Book details + reviews */}
+        <Route path="/books/:id" element={<BookDetails />} />
+
         {/* 👑 Admin only */}
         <Route
           path="/admin"
           element={
             <AdminRoute>
               <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRoute>
+              <AdminOrders />
             </AdminRoute>
           }
         />

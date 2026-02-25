@@ -3,48 +3,71 @@ const Book = require("../models/Book");
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 
-// Get all books (public)
+// 📚 Get all books (Public)
 router.get("/", async (req, res) => {
   try {
-    const q = req.query.q || "";
-    const books = await Book.find({
-      title: { $regex: q, $options: "i" },
-    }).sort({ createdAt: -1 });
+    const books = await Book.find().sort({ createdAt: -1 });
     res.json(books);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Failed to fetch books" });
   }
 });
 
-// Add book (Admin)
+// 📘 Get single book (Public)
+router.get("/:id", async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) return res.status(404).json({ message: "Book not found" });
+    res.json(book);
+  } catch {
+    res.status(500).json({ message: "Failed to fetch book" });
+  }
+});
+
+// ➕ Add book (Admin only)
 router.post("/", auth, admin, async (req, res) => {
   try {
-    const book = await Book.create(req.body);
+    const { title, author, price, genre, image, stock } = req.body;
+
+    if (!title || !author || !price || !genre || !image || stock === undefined) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const book = await Book.create({
+      title,
+      author,
+      price,
+      genre,
+      image,
+      stock,
+    });
+
     res.status(201).json(book);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("Add book error:", err);
+    res.status(500).json({ message: "Failed to add book" });
   }
 });
 
-// Update book (Admin)
+// ✏️ Update book (Admin only)
 router.put("/:id", auth, admin, async (req, res) => {
   try {
     const updated = await Book.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
     res.json(updated);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+  } catch {
+    res.status(500).json({ message: "Failed to update book" });
   }
 });
 
-// Delete book (Admin)
+// ❌ Delete book (Admin only)
 router.delete("/:id", auth, admin, async (req, res) => {
   try {
     await Book.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.json({ message: "Book deleted" });
+  } catch {
+    res.status(500).json({ message: "Failed to delete book" });
   }
 });
 
