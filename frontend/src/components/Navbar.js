@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import "./Navbar.css";
 
@@ -13,35 +13,59 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
+  const cartCount = cart.reduce((a, c) => a + c.qty, 0);
 
   return (
     <nav className="navbar">
-      <Link to="/" className="logo">
-        📚 BookStore
-      </Link>
+      <div className="nav-left">
+        <NavLink to="/" className="logo">
+          📚 BookStore
+        </NavLink>
 
-      <div className="nav-links">
-        <Link to="/cart">🛒 Cart ({cartCount})</Link>
+        <NavLink to="/" className="nav-link">
+          Home
+        </NavLink>
 
-        {/* 👑 Admin links */}
-        {user?.role === "Admin" && (
+        {user && (
           <>
-            <Link to="/admin">Admin</Link>
-            <Link to="/admin/orders">Orders</Link>
+            <NavLink to="/orders" className="nav-link">
+              My Orders
+            </NavLink>
+
+            {user.role === "Admin" && (
+              <>
+                <NavLink to="/admin" className="nav-link">
+                  Admin
+                </NavLink>
+                <NavLink to="/admin/orders" className="nav-link">
+                  Orders
+                </NavLink>
+              </>
+            )}
           </>
         )}
+      </div>
 
-       {user ? (
-  <>
-   <Link to="/orders">My Orders</Link>
-    <span className="welcome">Hi, {user.name}</span>
-    <button onClick={logout}>Logout</button>
-  </>
-) : (
+      <div className="nav-right">
+        <NavLink to="/cart" className="cart-link">
+          🛒 Cart <span className="cart-badge">{cartCount}</span>
+        </NavLink>
+
+        {user ? (
           <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
+            <span className="welcome">Hi, {user.name}</span>
+            <button className="logout-btn" onClick={logout}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <NavLink to="/login" className="nav-link">
+              Login
+            </NavLink>
+            <NavLink to="/register" className="nav-link">
+              Register
+            </NavLink>
           </>
         )}
       </div>
