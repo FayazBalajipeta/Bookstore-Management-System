@@ -23,28 +23,10 @@ export default function Checkout() {
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
 
   const placeOrder = async () => {
-    if (!token) {
-      toast.error("Please login to place order");
-      return;
-    }
-
-    if (!cart.length) {
-      toast.error("Cart is empty");
-      return;
-    }
-
-    if (!address.line1 || !address.city || !address.state || !address.pincode) {
-      toast.error("Please fill all address fields");
-      return;
-    }
-
-    if (!phone || phone.length < 10) {
-      toast.error("Please enter a valid phone number");
-      return;
-    }
+    if (!token) return toast.error("Please login");
 
     try {
-      const res = await axios.post(
+      await axios.post(
         "http://localhost:5000/api/orders",
         {
           items: cart.map((i) => ({
@@ -54,41 +36,31 @@ export default function Checkout() {
             qty: i.qty,
             image: i.image,
           })),
-          address: {
-            line1: address.line1,
-            city: address.city,
-            state: address.state,
-            pincode: address.pincode,
-          },
+          address,
           phone,
-          total: Number(total),
+          total,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       toast.success("Order placed successfully 🎉");
       clearCart();
-
-      // ✅ Redirect to success page with order id
-      navigate("/success", { state: { orderId: res.data._id } });
+      navigate("/success");
     } catch (err) {
-      console.error("Place order error:", err);
-      toast.error(err.response?.data?.message || "Failed to place order");
+      toast.error("Failed to place order");
     }
   };
 
   return (
-    <div>
+    <div className="checkout-page">
       <Navbar />
+
       <div className="checkout-container">
-        <h2>Checkout</h2>
+        <h2 className="checkout-title">🧾 Checkout</h2>
 
         <div className="checkout-grid">
-          <div className="address-box">
+          {/* Address */}
+          <div className="checkout-card">
             <h3>Shipping Address</h3>
 
             <input
@@ -113,7 +85,6 @@ export default function Checkout() {
                 setAddress({ ...address, pincode: e.target.value })
               }
             />
-
             <input
               placeholder="Phone Number"
               value={phone}
@@ -121,22 +92,23 @@ export default function Checkout() {
             />
           </div>
 
-          <div className="summary-box">
+          {/* Summary */}
+          <div className="checkout-card summary-card">
             <h3>Order Summary</h3>
 
             {cart.map((i) => (
-              <div key={i._id} className="summary-item">
-                <span>
-                  {i.title} × {i.qty}
-                </span>
+              <div key={i._id} className="summary-row">
+                <span>{i.title} × {i.qty}</span>
                 <span>₹{i.price * i.qty}</span>
               </div>
             ))}
 
-            <hr />
-            <h4>Total: ₹{total}</h4>
+            <div className="summary-total">
+              <strong>Total</strong>
+              <strong>₹{total}</strong>
+            </div>
 
-            <button onClick={placeOrder} className="place-btn">
+            <button className="place-btn" onClick={placeOrder}>
               Place Order
             </button>
           </div>
