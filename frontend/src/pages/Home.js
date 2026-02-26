@@ -80,42 +80,41 @@ export default function Home() {
             ))}
           </ul>
 
-          <div className="sidebar-filters">
+          {(activeGenre !== "All" || search || minPrice || maxPrice) && (
+            <button onClick={clearAll} className="clear-btn">
+              Clear Filters
+            </button>
+          )}
+        </aside>
+
+        {/* 📚 Books */}
+        <main className="home-container">
+          {/* 🔎 Top Filters */}
+          <div className="top-filters">
             <input
+              className="top-search"
               type="text"
-              placeholder="Search title/author"
+              placeholder="Search by title or author..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="search-input"
             />
 
-            <div className="price-row">
+            <div className="top-price">
               <input
                 type="number"
                 placeholder="Min ₹"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
-                className="price-input"
               />
               <input
                 type="number"
                 placeholder="Max ₹"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className="price-input"
               />
             </div>
-
-            {(activeGenre !== "All" || search || minPrice || maxPrice) && (
-              <button onClick={clearAll} className="clear-btn full">
-                Clear Filters
-              </button>
-            )}
           </div>
-        </aside>
 
-        {/* 📚 Books */}
-        <main className="home-container">
           <h2>Browse Books</h2>
 
           {filtered.length === 0 && <p>No books found 😕</p>}
@@ -123,27 +122,19 @@ export default function Home() {
           <div className="book-grid">
             {filtered.map((b) => (
               <div key={b._id} className="book-card">
-                {/* 👉 Click to open details */}
                 <img
                   src={b.image}
                   alt={b.title}
                   onClick={() => navigate(`/books/${b._id}`)}
-                  style={{ cursor: "pointer" }}
                 />
 
-                <h4
-                  onClick={() => navigate(`/books/${b._id}`)}
-                  style={{ cursor: "pointer" }}
-                >
+                <h4 onClick={() => navigate(`/books/${b._id}`)}>
                   {b.title}
                 </h4>
 
                 <p className="author">{b.author}</p>
                 <span className="genre">{b.genre}</span>
-
-                {/* ⭐ Average rating */}
                 <p>⭐ {b.avgRating ? b.avgRating.toFixed(1) : "0.0"} / 5</p>
-
                 <p className="price">₹{b.price}</p>
                 <button onClick={() => addToCart(b)}>Add to Cart</button>
               </div>

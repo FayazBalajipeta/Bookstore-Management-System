@@ -1,9 +1,11 @@
 import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
 import "./Cart.css";
-import { Link } from "react-router-dom";
+
 export default function Cart() {
   const { cart, removeFromCart, clearCart } = useCart();
+  const navigate = useNavigate();
 
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
 
@@ -11,28 +13,51 @@ export default function Cart() {
     <div>
       <Navbar />
 
-      <div className="cart-container">
-        <h2>Your Cart</h2>
+      <div className="cart-page">
+        <h2 className="cart-title">Your Cart</h2>
 
-        {cart.length === 0 && <p>Your cart is empty.</p>}
+        {cart.length === 0 ? (
+          <div className="empty-cart">
+            <h3>Your cart is empty 😕</h3>
+          </div>
+        ) : (
+          <>
+            <div className="cart-list">
+              {cart.map((i) => (
+                <div key={i._id} className="cart-item">
+                  <img src={i.image} alt={i.title} />
 
-        {cart.map((item) => (
-          <div className="cart-item" key={item._id}>
-            <img src={item.image} alt={item.title} />
-            <div>
-              <h4>{item.title}</h4>
-              <p>₹{item.price} × {item.qty}</p>
+                  <div className="cart-info">
+                    <h4>{i.title}</h4>
+                    <p>₹{i.price} × {i.qty}</p>
+                  </div>
+
+                  <button
+                    className="remove-btn"
+                    onClick={() => removeFromCart(i._id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
             </div>
-            <button onClick={() => removeFromCart(item._id)}>Remove</button>
-          </div>
-        ))}
 
-        {cart.length > 0 && (
-          <div className="cart-footer">
-            <h3>Total: ₹{total}</h3>
-            <button className="clear" onClick={clearCart}>Clear Cart</button>
-            <Link to="/checkout" className="checkout">Checkout</Link>
-          </div>
+            <div className="cart-summary">
+              <h3>Total: ₹{total}</h3>
+
+              <div className="cart-actions">
+                <button className="clear-btn" onClick={clearCart}>
+                  Clear Cart
+                </button>
+                <button
+                  className="checkout-btn"
+                  onClick={() => navigate("/checkout")}
+                >
+                  Checkout
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
