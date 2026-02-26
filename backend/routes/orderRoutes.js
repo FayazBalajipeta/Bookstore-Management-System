@@ -14,10 +14,23 @@ router.post("/", auth, async (req, res) => {
   try {
     const { items, address, phone, total } = req.body;
 
-    if (!items?.length || !address || !phone || !total) {
-      return res.status(400).json({ message: "Invalid order data" });
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "Order items required" });
     }
 
+    if (!address?.line1 || !address?.city || !address?.state || !address?.pincode) {
+      return res.status(400).json({ message: "Complete address required" });
+    }
+
+    if (!phone) {
+      return res.status(400).json({ message: "Phone number required" });
+    }
+
+    if (!total || total <= 0) {
+      return res.status(400).json({ message: "Invalid total amount" });
+    }
+
+    // Validate stock
     for (const i of items) {
       const book = await Book.findById(i.bookId);
       if (!book) {
@@ -30,6 +43,7 @@ router.post("/", auth, async (req, res) => {
       }
     }
 
+    // Reduce stock
     for (const i of items) {
       await Book.findByIdAndUpdate(i.bookId, { $inc: { stock: -i.qty } });
     }
@@ -67,11 +81,12 @@ router.get("/my/:userId", auth, async (req, res) => {
 
     res.json(orders);
   } catch (err) {
+    console.error("Fetch my orders error:", err);
     res.status(500).json({ message: "Failed to fetch orders" });
   }
 });
 
-// 🔍 Get single order (for Edit page)
+// 🔍 Get single order (Edit page)
 router.get("/:id", auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -86,6 +101,7 @@ router.get("/:id", auth, async (req, res) => {
 
     res.json(order);
   } catch (err) {
+    console.error("Get single order error:", err);
     res.status(500).json({ message: "Failed to fetch order" });
   }
 });
@@ -111,7 +127,7 @@ router.put("/:id/edit", auth, async (req, res) => {
 
     if (["Delivered", "Cancelled"].includes(order.status)) {
       return res.status(400).json({
-        message: "Cannot edit delivery details after delivery or cancellation",
+        message: "Cannot edit after delivery or cancellation",
       });
     }
 
@@ -122,7 +138,7 @@ router.put("/:id/edit", auth, async (req, res) => {
     res.json(order);
   } catch (err) {
     console.error("Edit order error:", err);
-    res.status(500).json({ message: "Failed to update order details" });
+    res.status(500).json({ message: "Failed to update delivery details" });
   }
 });
 
@@ -132,22 +148,43 @@ router.get("/", auth, admin, async (req, res) => {
     const orders = await Order.find().sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
+    console.error("Admin fetch orders error:", err);
     res.status(500).json({ message: "Failed to fetch orders" });
   }
 });
 
-// 👑 Admin: update order status + restore stock on cancel
-router.put("/:id/status", auth, admin, async (req, res) => {
+// 🔁 Admin OR Owner: update status (user can cancel only)
+router.put("/:id/status", auth, async (req, res) => {
   try {
     const { status } = req.body;
     const allowed = ["Pending", "Shipped", "Delivered", "Cancelled"];
+
     if (!allowed.includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
+      return res.status(400).json({ message: "Invalid status" });
     }
 
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
+    const isOwner = order.user.id === req.user.id;
+    const isAdmin = req.user.role === "Admin";
+
+    // User rules
+    if (!isAdmin) {
+      if (!isOwner) {
+        return res.status(403).json({ message: "Not allowed" });
+      }
+
+      if (status !== "Cancelled") {
+        return res.status(403).json({ message: "Only admin can change status" });
+      }
+
+      if (!["Pending", "Shipped"].includes(order.status)) {
+        return res.status(400).json({ message: "Cannot cancel at this stage" });
+      }
+    }
+
+    // Restore stock once
     if (status === "Cancelled" && order.status !== "Cancelled") {
       for (const i of order.items) {
         await Book.findByIdAndUpdate(i.bookId, { $inc: { stock: i.qty } });
@@ -160,7 +197,7 @@ router.put("/:id/status", auth, admin, async (req, res) => {
     res.json(order);
   } catch (err) {
     console.error("Update status error:", err);
-    res.status(500).json({ message: "Failed to update status" });
+    res.status(500).json({ message: "Failed to update order status" });
   }
 });
 

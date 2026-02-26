@@ -2,12 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";   // ✅ added
 import "./MyOrders.css";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();                 // ✅ added
 
   const fetchMyOrders = useCallback(async () => {
     try {
@@ -24,6 +26,7 @@ export default function MyOrders() {
       );
       setOrders(res.data);
     } catch (err) {
+      console.error("Fetch orders error:", err);
       toast.error("Failed to load your orders");
     }
   }, [token, user?.id]);
@@ -32,43 +35,10 @@ export default function MyOrders() {
     fetchMyOrders();
   }, [fetchMyOrders]);
 
-  const editDetails = async (orderId) => {
-    const newPhone = prompt("Enter new phone number:");
-    const newLine1 = prompt("Enter new address line:");
-    const newCity = prompt("Enter new city:");
-    const newState = prompt("Enter new state:");
-    const newPincode = prompt("Enter new pincode:");
-
-    if (!newPhone && !newLine1 && !newCity && !newState && !newPincode) {
-      toast.info("Nothing to update");
-      return;
-    }
-
-    try {
-      await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/edit`,
-        {
-          phone: newPhone,
-          address: {
-            line1: newLine1,
-            city: newCity,
-            state: newState,
-            pincode: newPincode,
-          },
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      toast.success("Delivery details updated");
-      fetchMyOrders();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
-    }
-  };
-
   return (
     <div className="orders-page">
       <Navbar />
+
       <div className="orders-container">
         <h2>📦 My Orders</h2>
 
@@ -76,6 +46,7 @@ export default function MyOrders() {
 
         {orders.map((o) => (
           <div key={o._id} className="order-card">
+            {/* Header */}
             <div className="order-header">
               <div>
                 <div className="order-id">Order ID: {o._id}</div>
@@ -89,6 +60,7 @@ export default function MyOrders() {
               </span>
             </div>
 
+            {/* Items */}
             <div className="order-items">
               {o.items.map((i) => (
                 <div key={i.bookId} className="order-item">
@@ -101,13 +73,14 @@ export default function MyOrders() {
               ))}
             </div>
 
+            {/* Footer */}
             <div className="order-footer">
               <div className="total">Total: ₹{o.total}</div>
 
               {["Pending", "Shipped"].includes(o.status) && (
                 <button
                   className="edit-btn"
-                  onClick={() => editDetails(o._id)}
+                  onClick={() => navigate(`/orders/${o._id}/edit`)}
                 >
                   ✏️ Edit Delivery Details
                 </button>

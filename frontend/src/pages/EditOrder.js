@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import "./Checkout.css"; // reuse styles
+import "./EditOrder.css";
 
 export default function EditOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  const [loading, setLoading] = useState(true);
+  const [order, setOrder] = useState(null);
   const [address, setAddress] = useState({
     line1: "",
     city: "",
@@ -25,43 +25,23 @@ export default function EditOrder() {
         const res = await axios.get(`http://localhost:5000/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (["Delivered", "Cancelled"].includes(res.data.status)) {
-          toast.error("This order can no longer be edited");
-          navigate("/orders");
-          return;
-        }
-
+        setOrder(res.data);
         setAddress(res.data.address);
-        setPhone(res.data.phone);
-        setLoading(false);
+        setPhone(res.data.phone || "");
       } catch {
         toast.error("Failed to load order");
-        navigate("/orders");
       }
     };
-
     fetchOrder();
-  }, [id, token, navigate]);
+  }, [id, token]);
 
-  const updateOrder = async () => {
-    if (!address.line1 || !address.city || !address.state || !address.pincode) {
-      toast.error("Please fill all address fields");
-      return;
-    }
-
-    if (!phone || phone.length < 10) {
-      toast.error("Enter valid phone number");
-      return;
-    }
-
+  const updateDetails = async () => {
     try {
       await axios.put(
         `http://localhost:5000/api/orders/${id}/edit`,
         { address, phone },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       toast.success("Delivery details updated");
       navigate("/orders");
     } catch (err) {
@@ -69,51 +49,93 @@ export default function EditOrder() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  const cancelOrder = async () => {
+    if (!window.confirm("Cancel this order?")) return;
+    try {
+      await axios.put(
+        `http://localhost:5000/api/orders/${id}/status`,
+        { status: "Cancelled" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Order cancelled");
+      navigate("/orders");
+    } catch {
+      toast.error("Cancel failed");
+    }
+  };
+
+  if (!order) return <p style={{ padding: "40px" }}>Loading...</p>;
 
   return (
-    <div>
+    <div className="edit-page">
       <Navbar />
-      <div className="checkout-container">
-        <h2>Edit Delivery Details</h2>
 
-        <div className="checkout-grid">
-          <div className="address-box">
+      <div className="edit-container">
+        <h2 className="edit-title">✏️ Edit Delivery Details</h2>
+
+        <div className="edit-grid">
+          {/* LEFT */}
+          <div className="edit-card">
             <h3>Shipping Address</h3>
 
-            <input
-              placeholder="Address Line"
-              value={address.line1}
-              onChange={(e) =>
-                setAddress({ ...address, line1: e.target.value })
-              }
-            />
-            <input
-              placeholder="City"
-              value={address.city}
-              onChange={(e) => setAddress({ ...address, city: e.target.value })}
-            />
-            <input
-              placeholder="State"
-              value={address.state}
-              onChange={(e) => setAddress({ ...address, state: e.target.value })}
-            />
-            <input
-              placeholder="Pincode"
-              value={address.pincode}
-              onChange={(e) =>
-                setAddress({ ...address, pincode: e.target.value })
-              }
-            />
-            <input
-              placeholder="Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+            <div className="form-grid">
+              <input
+                value={address.line1}
+                onChange={(e) => setAddress({ ...address, line1: e.target.value })}
+                placeholder="Address Line"
+              />
+              <input
+                value={address.city}
+                onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                placeholder="City"
+              />
+              <input
+                value={address.state}
+                onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                placeholder="State"
+              />
+              <input
+                value={address.pincode}
+                onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
+                placeholder="Pincode"
+              />
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Phone Number"
+              />
+            </div>
 
-            <button onClick={updateOrder} className="place-btn">
-              Save Changes
+            <button className="btn-primary" onClick={updateDetails}>
+              Update Delivery Details
             </button>
+
+            {["Pending", "Shipped"].includes(order.status) && (
+              <button className="btn-danger" onClick={cancelOrder}>
+                ❌ Cancel Order
+              </button>
+            )}
+          </div>
+
+          {/* RIGHT */}
+          <div className="edit-card">
+            <h3>Order Summary</h3>
+
+            {order.items.map((i) => (
+              <div key={i.bookId} className="summary-row">
+                <span>{i.title} × {i.qty}</span>
+                <span>₹{i.price * i.qty}</span>
+              </div>
+            ))}
+
+            <div className="summary-total">
+              <span>Total</span>
+              <span>₹{order.total}</span>
+            </div>
+
+            <span className={`status-badge ${order.status.toLowerCase()}`}>
+              {order.status}
+            </span>
           </div>
         </div>
       </div>
