@@ -2,14 +2,12 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 import "./MyOrders.css";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
-  const navigate = useNavigate();
 
   const fetchMyOrders = useCallback(async () => {
     try {
@@ -34,51 +32,87 @@ export default function MyOrders() {
     fetchMyOrders();
   }, [fetchMyOrders]);
 
-  return (
-    <div>
-      <Navbar />
-      <div className="my-orders">
-        <h2>My Orders</h2>
+  const editDetails = async (orderId) => {
+    const newPhone = prompt("Enter new phone number:");
+    const newLine1 = prompt("Enter new address line:");
+    const newCity = prompt("Enter new city:");
+    const newState = prompt("Enter new state:");
+    const newPincode = prompt("Enter new pincode:");
 
-        {orders.length === 0 && <p>No orders yet.</p>}
+    if (!newPhone && !newLine1 && !newCity && !newState && !newPincode) {
+      toast.info("Nothing to update");
+      return;
+    }
+
+    try {
+      await axios.put(
+        `http://localhost:5000/api/orders/${orderId}/edit`,
+        {
+          phone: newPhone,
+          address: {
+            line1: newLine1,
+            city: newCity,
+            state: newState,
+            pincode: newPincode,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Delivery details updated");
+      fetchMyOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Update failed");
+    }
+  };
+
+  return (
+    <div className="orders-page">
+      <Navbar />
+      <div className="orders-container">
+        <h2>📦 My Orders</h2>
+
+        {orders.length === 0 && <p className="empty">No orders yet.</p>}
 
         {orders.map((o) => (
           <div key={o._id} className="order-card">
             <div className="order-header">
               <div>
-                <strong>Order ID:</strong> {o._id}
-                <br />
-                <strong>Date:</strong>{" "}
-                {new Date(o.createdAt).toLocaleString()}
+                <div className="order-id">Order ID: {o._id}</div>
+                <div className="order-date">
+                  {new Date(o.createdAt).toLocaleString()}
+                </div>
               </div>
 
-              <span className={`status ${o.status.toLowerCase()}`}>
+              <span className={`status-badge ${o.status.toLowerCase()}`}>
                 {o.status}
               </span>
             </div>
 
-            <div className="items">
+            <div className="order-items">
               {o.items.map((i) => (
-                <div key={i.bookId} className="item">
+                <div key={i.bookId} className="order-item">
                   <img src={i.image} alt={i.title} />
-                  <span>
-                    {i.title} × {i.qty}
-                  </span>
+                  <div>
+                    <div className="item-title">{i.title}</div>
+                    <div className="item-qty">Qty: {i.qty}</div>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="total">Total: ₹{o.total}</div>
+            <div className="order-footer">
+              <div className="total">Total: ₹{o.total}</div>
 
-            {/* ✏️ EDIT BUTTON → Redirect to Edit Page */}
-            {["Pending", "Shipped"].includes(o.status) && (
-              <button
-                className="edit-btn"
-                onClick={() => navigate(`/orders/${o._id}/edit`)}
-              >
-                ✏️ Edit Delivery Details
-              </button>
-            )}
+              {["Pending", "Shipped"].includes(o.status) && (
+                <button
+                  className="edit-btn"
+                  onClick={() => editDetails(o._id)}
+                >
+                  ✏️ Edit Delivery Details
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>

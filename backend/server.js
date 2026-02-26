@@ -7,6 +7,8 @@ const authRoutes = require("./routes/authRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 const orderRoutes = require("./routes/orderRoutes"); // ✅ MUST match file name exactly
 const analyticsRoutes = require("./routes/analyticsRoutes"); 
+const adminRoutes = require("./routes/AdminRoutes");
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -17,6 +19,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/orders", orderRoutes); // ✅ THIS is the route your frontend calls
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/admin", adminRoutes);
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))

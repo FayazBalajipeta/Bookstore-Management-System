@@ -14,7 +14,7 @@ import MyOrders from "./pages/MyOrders";
 import EditOrder from "./pages/EditOrder";
 import OrderSuccess from "./pages/OrderSuccess";
 import BookDetails from "./pages/BookDetails"; // ⭐ NEW
-
+import AdminBooks from "./pages/AdminBooks";
 function App() {
   return (
     <BrowserRouter>
@@ -83,7 +83,14 @@ function App() {
             </AdminRoute>
           }
         />
-
+<Route
+  path="/admin/books"
+  element={
+    <AdminRoute>
+      <AdminBooks />
+    </AdminRoute>
+  }
+/>
         <Route
           path="/admin/orders"
           element={

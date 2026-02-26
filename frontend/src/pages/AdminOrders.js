@@ -16,9 +16,7 @@ export default function AdminOrders() {
       setOrders(res.data);
     } catch (err) {
       console.error("Load orders error:", err);
-      toast.error(
-        err.response?.data?.message || "Failed to load orders"
-      );
+      toast.error(err.response?.data?.message || "Failed to load orders");
     }
   }, [token]);
 
@@ -37,32 +35,39 @@ export default function AdminOrders() {
       fetchOrders();
     } catch (err) {
       console.error("Update status error:", err);
-      toast.error(
-        err.response?.data?.message || "Update failed"
-      );
+      toast.error(err.response?.data?.message || "Update failed");
     }
   };
 
   return (
-    <div>
+    <div className="admin-orders-page">
       <Navbar />
-      <div className="admin-orders">
-        <h2>Manage Orders</h2>
 
-        {orders.length === 0 && <p>No orders found.</p>}
+      <div className="admin-orders-container">
+        <h2>📦 Manage Orders</h2>
+
+        {orders.length === 0 && (
+          <p className="empty-state">No orders found.</p>
+        )}
 
         {orders.map((o) => (
           <div key={o._id} className="order-card">
             <div className="order-header">
-              <div>
-                <strong>Order ID:</strong> {o._id}
-                <br />
-                <strong>User:</strong> {o.user?.name} ({o.user?.email})
-                <br />
-                <strong>Total:</strong> ₹{o.total}
+              <div className="order-info">
+                <p>
+                  <strong>Order ID:</strong> {o._id}
+                </p>
+                <p>
+                  <strong>User:</strong>{" "}
+                  {o.user?.name || "User"} ({o.user?.email || "N/A"})
+                </p>
+                <p>
+                  <strong>Total:</strong> ₹{o.total}
+                </p>
               </div>
 
               <select
+                className={`status-dropdown ${o.status}`}
                 value={o.status}
                 onChange={(e) => updateStatus(o._id, e.target.value)}
               >
@@ -73,13 +78,14 @@ export default function AdminOrders() {
               </select>
             </div>
 
-            <div className="items">
+            <div className="order-items">
               {o.items.map((i) => (
-                <div key={i.bookId} className="item">
+                <div key={i.bookId} className="order-item">
                   <img src={i.image} alt={i.title} />
-                  <span>
-                    {i.title} × {i.qty}
-                  </span>
+                  <div>
+                    <p>{i.title}</p>
+                    <small>Qty: {i.qty}</small>
+                  </div>
                 </div>
               ))}
             </div>

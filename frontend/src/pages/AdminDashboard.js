@@ -1,237 +1,90 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
 import "./AdminDashboard.css";
 
 export default function AdminDashboard() {
-  const [books, setBooks] = useState([]);
-  const [stats, setStats] = useState(null);
-
-  const [form, setForm] = useState({
-    title: "",
-    author: "",
-    price: "",
-    genre: "",
-    image: "",
-    stock: "",
+  const [analytics, setAnalytics] = useState({
+    totalOrders: 0,
+    totalSales: 0,
+    todayOrders: 0,
+    topSelling: [],
+    lowStock: [],
   });
 
-  const [editingId, setEditingId] = useState(null);
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        // 📚 Fetch books
-        const booksRes = await axios.get("http://localhost:5000/api/books");
-        setBooks(booksRes.data);
-
-        // 📊 Fetch analytics
-        const analyticsRes = await axios.get("http://localhost:5000/api/analytics", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setStats(analyticsRes.data);
-      } catch (err) {
-        toast.error("Failed to load dashboard data");
-      }
-    };
-
-    fetchAll();
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/admin/analytics", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAnalytics(res.data);
+    } catch (err) {
+      toast.error("Failed to load dashboard analytics");
+    }
   }, [token]);
 
-  const submit = async (e) => {
-    e.preventDefault();
-
-    try {
-      if (editingId) {
-        await axios.put(
-          `http://localhost:5000/api/books/${editingId}`,
-          form,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toast.success("Book updated");
-      } else {
-        await axios.post("http://localhost:5000/api/books", form, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        toast.success("Book added");
-      }
-
-      setForm({
-        title: "",
-        author: "",
-        price: "",
-        genre: "",
-        image: "",
-        stock: "",
-      });
-      setEditingId(null);
-
-      // Refresh data
-      const booksRes = await axios.get("http://localhost:5000/api/books");
-      setBooks(booksRes.data);
-
-      const analyticsRes = await axios.get("http://localhost:5000/api/analytics", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStats(analyticsRes.data);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Action failed");
-    }
-  };
-
-  const edit = (b) => {
-    setEditingId(b._id);
-    setForm({
-      title: b.title,
-      author: b.author,
-      price: b.price,
-      genre: b.genre,
-      image: b.image,
-      stock: b.stock,
-    });
-  };
-
-  const remove = async (id) => {
-    if (!window.confirm("Delete this book?")) return;
-    try {
-      await axios.delete(`http://localhost:5000/api/books/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Deleted");
-
-      // Refresh data
-      const booksRes = await axios.get("http://localhost:5000/api/books");
-      setBooks(booksRes.data);
-
-      const analyticsRes = await axios.get("http://localhost:5000/api/analytics", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStats(analyticsRes.data);
-    } catch {
-      toast.error("Delete failed");
-    }
-  };
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   return (
-    <div>
+    <div className="admin-dashboard-page">
       <Navbar />
-      <div className="admin-container">
-        <h2>📊 Admin Dashboard</h2>
 
-        {/* ====== ANALYTICS ====== */}
-        {stats && (
-          <>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <h3>Total Orders</h3>
-                <p>{stats.totalOrders}</p>
-              </div>
+      <div className="admin-dashboard-container">
+        <h2 className="dashboard-title">📊 Admin Dashboard</h2>
 
-              <div className="stat-card">
-                <h3>Total Sales</h3>
-                <p>₹{stats.totalSales}</p>
-              </div>
+        {/* Stats */}
+        <div className="stats-grid">
+          <div className="stat-card orders">
+            <h4>Total Orders</h4>
+            <p>{analytics.totalOrders}</p>
+          </div>
+          <div className="stat-card sales">
+            <h4>Total Sales</h4>
+            <p>₹{analytics.totalSales}</p>
+          </div>
+          <div className="stat-card today">
+            <h4>Orders Today</h4>
+            <p>{analytics.todayOrders}</p>
+          </div>
+        </div>
 
-              <div className="stat-card">
-                <h3>Orders Today</h3>
-                <p>{stats.ordersToday}</p>
-              </div>
+        {/* Top Selling */}
+        <h3 className="section-title">🔥 Top Selling Books</h3>
+        <div className="top-selling-grid">
+          {analytics.topSelling.length === 0 && (
+            <p className="muted">No sales yet</p>
+          )}
+          {analytics.topSelling.map((b) => (
+            <div key={b._id} className="top-selling-card">
+              <img src={b.image} alt={b.title} />
+              <h5>{b.title}</h5>
+              <span>Sold: {b.sold}</span>
             </div>
+          ))}
+        </div>
 
-            <h3>🔥 Top Selling Books</h3>
-            <div className="top-books">
-              {stats.topBooks.map((b) => (
-                <div key={b._id} className="top-book-card">
-                  <img src={b.image} alt={b.title} />
-                  <p>{b.title}</p>
-                  <span>Sold: {b.sold}</span>
+        {/* Low Stock */}
+        <h3 className="section-title">⚠️ Low Stock Alerts</h3>
+        <div className="low-stock-grid">
+          {analytics.lowStock.length === 0 ? (
+            <p className="success-text">All books are well stocked 🎉</p>
+          ) : (
+            analytics.lowStock.map((b) => (
+              <div key={b._id} className="low-stock-card">
+                <img src={b.image} alt={b.title} />
+                <div>
+                  <h5>{b.title}</h5>
+                  <span>{b.stock} left</span>
                 </div>
-              ))}
-            </div>
-
-            <h3>⚠️ Low Stock Alerts</h3>
-            <div className="low-stock">
-              {stats.lowStockBooks.length === 0 && <p>All good 🎉</p>}
-              {stats.lowStockBooks.map((b) => (
-                <div key={b._id} className="low-stock-card">
-                  <img src={b.image} alt={b.title} />
-                  <p>{b.title}</p>
-                  <span>Stock: {b.stock}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* ====== BOOK CRUD ====== */}
-        <h2>📚 Manage Books</h2>
-
-        <form className="admin-form" onSubmit={submit}>
-          <input
-            placeholder="Title"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-          <input
-            placeholder="Author"
-            value={form.author}
-            onChange={(e) => setForm({ ...form, author: e.target.value })}
-          />
-          <input
-            placeholder="Price"
-            type="number"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-          />
-          <input
-            placeholder="Genre"
-            value={form.genre}
-            onChange={(e) => setForm({ ...form, genre: e.target.value })}
-          />
-          <input
-            placeholder="Image URL"
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-          />
-          <input
-            placeholder="Stock"
-            type="number"
-            value={form.stock}
-            onChange={(e) => setForm({ ...form, stock: e.target.value })}
-          />
-
-          <button>{editingId ? "Update Book" : "Add Book"}</button>
-        </form>
-
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Author</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {books.map((b) => (
-              <tr key={b._id}>
-                <td>{b.title}</td>
-                <td>{b.author}</td>
-                <td>₹{b.price}</td>
-                <td>{b.stock}</td>
-                <td>
-                  <button onClick={() => edit(b)}>Edit</button>
-                  <button className="danger" onClick={() => remove(b._id)}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

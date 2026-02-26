@@ -1,0 +1,86 @@
+.admin-books-container {
+  padding: 30px 50px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc, #eef2ff);
+}
+
+.admin-books-container h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: #0f172a;
+}
+
+.admin-books-form {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+  margin-bottom: 30px;
+}
+
+.admin-books-form input,
+.admin-books-form select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.admin-books-form button {
+  grid-column: span 3;
+  padding: 12px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border: none;
+  border-radius: 999px;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-books-form button:hover {
+  opacity: 0.9;
+}
+
+.admin-books-table {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+  border-collapse: collapse;
+  overflow: hidden;
+}
+
+.admin-books-table th,
+.admin-books-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.admin-books-table th {
+  background: #f1f5f9;
+  font-weight: 700;
+}
+
+.admin-books-table tr:hover {
+  background: #f8fafc;
+}
+
+.admin-books-table button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  margin-right: 6px;
+  background: #2563eb;
+  color: white;
+  font-size: 0.8rem;
+}
+
+.admin-books-table .danger {
+  background: #ef4444;
+}

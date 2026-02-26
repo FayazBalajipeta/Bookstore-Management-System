@@ -13,32 +13,63 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  const cartCount = cart.reduce((a, c) => a + c.qty, 0);
+  const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
   return (
     <nav className="navbar">
+      {/* LEFT */}
       <div className="nav-left">
         <NavLink to="/" className="logo">
-          📚 BookStore
+          📚 <span>BookStore</span>
         </NavLink>
 
-        <NavLink to="/" className="nav-link">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            isActive ? "nav-link active" : "nav-link"
+          }
+        >
           Home
         </NavLink>
 
         {user && (
           <>
-            <NavLink to="/orders" className="nav-link">
+            <NavLink
+              to="/orders"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
               My Orders
             </NavLink>
 
             {user.role === "Admin" && (
               <>
-                <NavLink to="/admin" className="nav-link">
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active" : "nav-link"
+                  }
+                >
                   Admin
                 </NavLink>
-                <NavLink to="/admin/orders" className="nav-link">
+
+                <NavLink
+                  to="/admin/orders"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active" : "nav-link"
+                  }
+                >
                   Orders
+                </NavLink>
+
+                <NavLink
+                  to="/admin/books"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active" : "nav-link"
+                  }
+                >
+                  Manage Books
                 </NavLink>
               </>
             )}
@@ -46,9 +77,11 @@ export default function Navbar() {
         )}
       </div>
 
+      {/* RIGHT */}
       <div className="nav-right">
         <NavLink to="/cart" className="cart-link">
-          🛒 Cart <span className="cart-badge">{cartCount}</span>
+          🛒 Cart
+          <span className="cart-badge">{cartCount}</span>
         </NavLink>
 
         {user ? (
