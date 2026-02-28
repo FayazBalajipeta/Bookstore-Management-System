@@ -11,22 +11,27 @@ const adminRoutes = require("./routes/AdminRoutes");
 
 const app = express();
 
-/* ================================
-   ✅ PRODUCTION-READY CORS SETUP
-================================ */
+/* =====================================
+   ✅ PRODUCTION-SAFE CORS CONFIG
+===================================== */
 
 const allowedOrigins = [
   "http://localhost:3000",
-  process.env.CLIENT_URL, // production frontend
-];
+  "https://bookstoreapp-tawny.vercel.app",
+  process.env.CLIENT_URL,
+].filter(Boolean);
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+    origin: (origin, callback) => {
+      // Allow requests without origin (Postman, server-to-server)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("CORS not allowed"));
+        console.log("❌ Blocked by CORS:", origin);
+        callback(null, false); // do NOT throw error
       }
     },
     credentials: true,
@@ -35,17 +40,17 @@ app.use(
 
 app.use(express.json());
 
-/* ================================
+/* =====================================
    ✅ HEALTH CHECK ROUTE
-================================ */
+===================================== */
 
 app.get("/", (req, res) => {
   res.json({ status: "Backend running 🚀" });
 });
 
-/* ================================
+/* =====================================
    ✅ API ROUTES
-================================ */
+===================================== */
 
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
@@ -53,18 +58,18 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/admin", adminRoutes);
 
-/* ================================
+/* =====================================
    ✅ GLOBAL ERROR HANDLER
-================================ */
+===================================== */
 
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err.message);
-  res.status(500).json({ message: "Internal Server Error" });
+  console.error("🔥 Server Error:", err.message);
+  res.status(500).json({ message: err.message || "Internal Server Error" });
 });
 
-/* ================================
+/* =====================================
    ✅ DATABASE CONNECTION
-================================ */
+===================================== */
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -74,12 +79,12 @@ mongoose
     process.exit(1);
   });
 
-/* ================================
-   ✅ PORT CONFIG (IMPORTANT)
-================================ */
+/* =====================================
+   ✅ PORT CONFIG (Render Required)
+===================================== */
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
