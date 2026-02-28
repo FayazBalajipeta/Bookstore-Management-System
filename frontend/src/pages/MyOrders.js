@@ -82,7 +82,7 @@ export default function MyOrders() {
                   className="edit-btn"
                   onClick={() => navigate(`/orders/${o._id}/edit`)}
                 >
-                  ✏️ Edit Delivery Details
+                  ✏️ Edit Order Details
                 </button>
               )}
             </div>
