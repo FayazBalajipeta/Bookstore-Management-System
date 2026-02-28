@@ -4,15 +4,21 @@ import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
 import "./AdminOrders.css";
 
+// ✅ Production Backend URL
+const API = "https://bookstore-management-system-6qhx.onrender.com";
+
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const token = localStorage.getItem("token");
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/orders", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `${API}/api/orders`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setOrders(res.data);
     } catch (err) {
       console.error("Load orders error:", err);
@@ -27,11 +33,14 @@ export default function AdminOrders() {
   const updateStatus = async (id, status) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/orders/${id}/status`,
+        `${API}/api/orders/${id}/status`,
         { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-      toast.success("Status updated");
+
+      toast.success("Status updated successfully");
       fetchOrders();
     } catch (err) {
       console.error("Update status error:", err);
@@ -69,7 +78,9 @@ export default function AdminOrders() {
               <select
                 className={`status-dropdown ${o.status}`}
                 value={o.status}
-                onChange={(e) => updateStatus(o._id, e.target.value)}
+                onChange={(e) =>
+                  updateStatus(o._id, e.target.value)
+                }
               >
                 <option value="Pending">Pending</option>
                 <option value="Shipped">Shipped</option>

@@ -6,6 +6,9 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import "./Checkout.css";
 
+// ✅ Production Backend URL
+const API = "https://bookstore-management-system-6qhx.onrender.com";
+
 export default function Checkout() {
   const { cart, clearCart } = useCart();
   const navigate = useNavigate();
@@ -23,11 +26,19 @@ export default function Checkout() {
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
 
   const placeOrder = async () => {
-    if (!token) return toast.error("Please login");
+    if (!token) {
+      toast.error("Please login");
+      return;
+    }
+
+    if (cart.length === 0) {
+      toast.error("Cart is empty");
+      return;
+    }
 
     try {
       await axios.post(
-        "http://localhost:5000/api/orders",
+        `${API}/api/orders`,
         {
           items: cart.map((i) => ({
             bookId: i._id,
@@ -40,14 +51,16 @@ export default function Checkout() {
           phone,
           total,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       toast.success("Order placed successfully 🎉");
       clearCart();
       navigate("/success");
     } catch (err) {
-      toast.error("Failed to place order");
+      toast.error(err.response?.data?.message || "Failed to place order");
     }
   };
 
@@ -66,18 +79,27 @@ export default function Checkout() {
             <input
               placeholder="Address Line"
               value={address.line1}
-              onChange={(e) => setAddress({ ...address, line1: e.target.value })}
+              onChange={(e) =>
+                setAddress({ ...address, line1: e.target.value })
+              }
             />
+
             <input
               placeholder="City"
               value={address.city}
-              onChange={(e) => setAddress({ ...address, city: e.target.value })}
+              onChange={(e) =>
+                setAddress({ ...address, city: e.target.value })
+              }
             />
+
             <input
               placeholder="State"
               value={address.state}
-              onChange={(e) => setAddress({ ...address, state: e.target.value })}
+              onChange={(e) =>
+                setAddress({ ...address, state: e.target.value })
+              }
             />
+
             <input
               placeholder="Pincode"
               value={address.pincode}
@@ -85,6 +107,7 @@ export default function Checkout() {
                 setAddress({ ...address, pincode: e.target.value })
               }
             />
+
             <input
               placeholder="Phone Number"
               value={phone}
@@ -98,7 +121,9 @@ export default function Checkout() {
 
             {cart.map((i) => (
               <div key={i._id} className="summary-row">
-                <span>{i.title} × {i.qty}</span>
+                <span>
+                  {i.title} × {i.qty}
+                </span>
                 <span>₹{i.price * i.qty}</span>
               </div>
             ))}

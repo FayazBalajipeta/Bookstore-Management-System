@@ -2,14 +2,17 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";   // ✅ added
+import { useNavigate } from "react-router-dom";
 import "./MyOrders.css";
+
+// ✅ Production Backend URL
+const API = "https://bookstore-management-system-6qhx.onrender.com";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
-  const navigate = useNavigate();                 // ✅ added
+  const navigate = useNavigate();
 
   const fetchMyOrders = useCallback(async () => {
     try {
@@ -19,15 +22,16 @@ export default function MyOrders() {
       }
 
       const res = await axios.get(
-        `http://localhost:5000/api/orders/my/${user.id}`,
+        `${API}/api/orders/my/${user.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       setOrders(res.data);
     } catch (err) {
       console.error("Fetch orders error:", err);
-      toast.error("Failed to load your orders");
+      toast.error(err.response?.data?.message || "Failed to load your orders");
     }
   }, [token, user?.id]);
 
@@ -42,20 +46,26 @@ export default function MyOrders() {
       <div className="orders-container">
         <h2>📦 My Orders</h2>
 
-        {orders.length === 0 && <p className="empty">No orders yet.</p>}
+        {orders.length === 0 && (
+          <p className="empty">No orders yet.</p>
+        )}
 
         {orders.map((o) => (
           <div key={o._id} className="order-card">
             {/* Header */}
             <div className="order-header">
               <div>
-                <div className="order-id">Order ID: {o._id}</div>
+                <div className="order-id">
+                  Order ID: {o._id}
+                </div>
                 <div className="order-date">
                   {new Date(o.createdAt).toLocaleString()}
                 </div>
               </div>
 
-              <span className={`status-badge ${o.status.toLowerCase()}`}>
+              <span
+                className={`status-badge ${o.status.toLowerCase()}`}
+              >
                 {o.status}
               </span>
             </div>
@@ -66,8 +76,12 @@ export default function MyOrders() {
                 <div key={i.bookId} className="order-item">
                   <img src={i.image} alt={i.title} />
                   <div>
-                    <div className="item-title">{i.title}</div>
-                    <div className="item-qty">Qty: {i.qty}</div>
+                    <div className="item-title">
+                      {i.title}
+                    </div>
+                    <div className="item-qty">
+                      Qty: {i.qty}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -75,12 +89,16 @@ export default function MyOrders() {
 
             {/* Footer */}
             <div className="order-footer">
-              <div className="total">Total: ₹{o.total}</div>
+              <div className="total">
+                Total: ₹{o.total}
+              </div>
 
               {["Pending", "Shipped"].includes(o.status) && (
                 <button
                   className="edit-btn"
-                  onClick={() => navigate(`/orders/${o._id}/edit`)}
+                  onClick={() =>
+                    navigate(`/orders/${o._id}/edit`)
+                  }
                 >
                   ✏️ Edit Order Details
                 </button>

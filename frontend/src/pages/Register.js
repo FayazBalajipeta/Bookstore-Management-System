@@ -4,6 +4,9 @@ import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import "./Register.css";
 
+// ✅ Production Backend URL
+const API = "https://bookstore-management-system-6qhx.onrender.com";
+
 export default function Register() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -27,13 +30,13 @@ export default function Register() {
     try {
       setLoading(true);
 
-      await axios.post("http://localhost:5000/api/auth/register", {
+      await axios.post(`${API}/api/auth/register`, {
         name,
         email,
         password,
       });
 
-      toast.success("Registration successful");
+      toast.success("Registration successful 🎉");
       navigate("/login");
     } catch (err) {
       toast.error(err.response?.data?.message || "Registration failed");

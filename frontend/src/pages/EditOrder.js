@@ -5,6 +5,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "./EditOrder.css";
 
+// ✅ Production Backend URL
+const API = "https://bookstore-management-system-6qhx.onrender.com";
+
 export default function EditOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -19,29 +22,39 @@ export default function EditOrder() {
   });
   const [phone, setPhone] = useState("");
 
+  // ✅ Fetch Order Details
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/orders/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          `${API}/api/orders/${id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
         setOrder(res.data);
         setAddress(res.data.address);
         setPhone(res.data.phone || "");
-      } catch {
+      } catch (err) {
         toast.error("Failed to load order");
       }
     };
+
     fetchOrder();
   }, [id, token]);
 
+  // ✅ Update Delivery Details
   const updateDetails = async () => {
     try {
       await axios.put(
-        `http://localhost:5000/api/orders/${id}/edit`,
+        `${API}/api/orders/${id}/edit`,
         { address, phone },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
+
       toast.success("Delivery details updated");
       navigate("/orders");
     } catch (err) {
@@ -49,22 +62,28 @@ export default function EditOrder() {
     }
   };
 
+  // ✅ Cancel Order
   const cancelOrder = async () => {
     if (!window.confirm("Cancel this order?")) return;
+
     try {
       await axios.put(
-        `http://localhost:5000/api/orders/${id}/status`,
+        `${API}/api/orders/${id}/status`,
         { status: "Cancelled" },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-      toast.success("Order cancelled");
+
+      toast.success("Order cancelled successfully");
       navigate("/orders");
-    } catch {
-      toast.error("Cancel failed");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Cancel failed");
     }
   };
 
-  if (!order) return <p style={{ padding: "40px" }}>Loading...</p>;
+  if (!order)
+    return <p style={{ padding: "40px" }}>Loading...</p>;
 
   return (
     <div className="edit-page">
@@ -81,24 +100,36 @@ export default function EditOrder() {
             <div className="form-grid">
               <input
                 value={address.line1}
-                onChange={(e) => setAddress({ ...address, line1: e.target.value })}
+                onChange={(e) =>
+                  setAddress({ ...address, line1: e.target.value })
+                }
                 placeholder="Address Line"
               />
+
               <input
                 value={address.city}
-                onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                onChange={(e) =>
+                  setAddress({ ...address, city: e.target.value })
+                }
                 placeholder="City"
               />
+
               <input
                 value={address.state}
-                onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                onChange={(e) =>
+                  setAddress({ ...address, state: e.target.value })
+                }
                 placeholder="State"
               />
+
               <input
                 value={address.pincode}
-                onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
+                onChange={(e) =>
+                  setAddress({ ...address, pincode: e.target.value })
+                }
                 placeholder="Pincode"
               />
+
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -123,7 +154,9 @@ export default function EditOrder() {
 
             {order.items.map((i) => (
               <div key={i.bookId} className="summary-row">
-                <span>{i.title} × {i.qty}</span>
+                <span>
+                  {i.title} × {i.qty}
+                </span>
                 <span>₹{i.price * i.qty}</span>
               </div>
             ))}
@@ -133,7 +166,9 @@ export default function EditOrder() {
               <span>₹{order.total}</span>
             </div>
 
-            <span className={`status-badge ${order.status.toLowerCase()}`}>
+            <span
+              className={`status-badge ${order.status.toLowerCase()}`}
+            >
               {order.status}
             </span>
           </div>

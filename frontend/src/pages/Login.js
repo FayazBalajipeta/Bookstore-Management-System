@@ -4,6 +4,9 @@ import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 
+// ✅ Production Backend URL
+const API = "https://bookstore-management-system-6qhx.onrender.com";
+
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -21,7 +24,7 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await axios.post(`${API}/api/auth/login`, {
         email,
         password,
       });
@@ -29,8 +32,8 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      toast.success("Login successful");
-      navigate("/"); // later redirect to homepage/dashboard
+      toast.success("Login successful 🎉");
+      navigate("/");
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
     } finally {

@@ -5,6 +5,9 @@ import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
+// ✅ Production Backend URL
+const API = "https://bookstore-management-system-6qhx.onrender.com";
+
 export default function Home() {
   const [books, setBooks] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -15,17 +18,24 @@ export default function Home() {
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
+  // ✅ Fetch Books
   useEffect(() => {
     const fetchBooks = async () => {
-      const res = await axios.get("http://localhost:5000/api/books");
-      setBooks(res.data);
-      setFiltered(res.data);
+      try {
+        const res = await axios.get(`${API}/api/books`);
+        setBooks(res.data);
+        setFiltered(res.data);
+      } catch (err) {
+        console.error(err);
+      }
     };
+
     fetchBooks();
   }, []);
 
   const genres = ["All", ...new Set(books.map((b) => b.genre))];
 
+  // ✅ Filters Logic
   useEffect(() => {
     let result = books;
 
@@ -65,9 +75,10 @@ export default function Home() {
       <Navbar />
 
       <div className="home-layout">
-        {/* 🧭 Sidebar */}
+        {/* Sidebar */}
         <aside className="sidebar">
           <h3>Categories</h3>
+
           <ul>
             {genres.map((g) => (
               <li
@@ -87,9 +98,9 @@ export default function Home() {
           )}
         </aside>
 
-        {/* 📚 Books */}
+        {/* Books Section */}
         <main className="home-container">
-          {/* 🔎 Top Filters */}
+          {/* Top Filters */}
           <div className="top-filters">
             <input
               className="top-search"
@@ -106,6 +117,7 @@ export default function Home() {
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
               />
+
               <input
                 type="number"
                 placeholder="Max ₹"
@@ -134,9 +146,16 @@ export default function Home() {
 
                 <p className="author">{b.author}</p>
                 <span className="genre">{b.genre}</span>
-                <p>⭐ {b.avgRating ? b.avgRating.toFixed(1) : "0.0"} / 5</p>
+
+                <p>
+                  ⭐ {b.avgRating ? b.avgRating.toFixed(1) : "0.0"} / 5
+                </p>
+
                 <p className="price">₹{b.price}</p>
-                <button onClick={() => addToCart(b)}>Add to Cart</button>
+
+                <button onClick={() => addToCart(b)}>
+                  Add to Cart
+                </button>
               </div>
             ))}
           </div>
