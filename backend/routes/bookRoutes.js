@@ -44,15 +44,23 @@ router.post("/:id/reviews", auth, async (req, res) => {
   try {
     const { rating, comment } = req.body;
 
+    if (!rating || !comment) {
+      return res.status(400).json({ message: "Rating and comment required" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid book ID" });
+    }
+
     const book = await Book.findById(req.params.id);
 
     if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
 
-    // Check if user already reviewed
+    // ✅ Correct duplicate check (using userId)
     const alreadyReviewed = book.reviews.find(
-      (r) => r.user?.toString() === req.user.id
+      (r) => r.userId.toString() === req.user._id.toString()
     );
 
     if (alreadyReviewed) {
@@ -62,15 +70,15 @@ router.post("/:id/reviews", auth, async (req, res) => {
     }
 
     const review = {
+      userId: req.user._id,
       name: req.user.name,
       rating: Number(rating),
       comment,
-      user: req.user.id,
     };
 
     book.reviews.push(review);
 
-    // Recalculate average rating
+    // ✅ Recalculate average rating
     book.avgRating =
       book.reviews.reduce((acc, item) => acc + item.rating, 0) /
       book.reviews.length;
@@ -78,6 +86,7 @@ router.post("/:id/reviews", auth, async (req, res) => {
     await book.save();
 
     res.status(201).json({ message: "Review added successfully" });
+
   } catch (err) {
     console.error("Review error:", err);
     res.status(500).json({ message: "Failed to add review" });
