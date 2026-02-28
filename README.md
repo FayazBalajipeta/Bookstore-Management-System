@@ -5,15 +5,19 @@ A full-stack MERN application for managing an online bookstore with authenticati
 🌐 Live Frontend: https://bookstoreapp-tawny.vercel.app
 
 Login Access(Demo):
+
 Admin:admin@gmail.com
+
 password:123456
 
 User:user@gmail.com
+
 passwod:123456
 
 ⚙️ Live Backend API: https://bookstore-management-system-6qhx.onrender.com
 
 🚀 Features
+
 👤 User Features
 
 Register & Login (JWT Authentication)
@@ -43,6 +47,7 @@ Manage orders
 View analytics
 
 🏗 Tech Stack
+
 Frontend
 
 React.js
@@ -76,17 +81,29 @@ Backend → Render
 Database → MongoDB Atlas
 
 📂 Project Structure
+
 BOOKSTORE/
+
 │
+
 ├── backend/
+
 │   ├── middleware/
+
 │   ├── models/
+
 │   ├── routes/
+
 │   ├── server.js
+
 │
+
 ├── frontend/
+
 │   ├── src/
+
 │   ├── public/
+
 🔐 Authentication Flow
 
 User logs in
@@ -122,32 +139,52 @@ Order status tracking
 Editable while pending
 
 ⚙️ Environment Variables
-Backend .env
+
+Backend 
+.env
+
 MONGO_URI=your_mongodb_connection_string
+
 JWT_SECRET=your_secret_key
+
 CLIENT_URL=https://bookstoreapp-tawny.vercel.app
+
 Frontend (Vercel Environment Variable)
+
 REACT_APP_API=https://bookstore-management-system-6qhx.onrender.com
+
 🛠 Installation (Local Setup)
+
 1️⃣ Clone Repository
+
 git clone https://github.com/FayazBalajipeta/Bookstore-Management-System.git
+
 cd Bookstore-Management-System
+
 2️⃣ Backend Setup
+
 cd backend
+
 npm install
+
 npm run dev
 
 Server runs on:
 
 http://localhost:5000
+
 3️⃣ Frontend Setup
+
 cd frontend
+
 npm install
+
 npm start
 
 Runs on:
 
 http://localhost:3000
+
 🧠 Key Learning Outcomes
 
 JWT authentication implementation
@@ -183,5 +220,7 @@ Email notifications
 👨‍💻 Author
 
 Fayaz Balajipeta
+
 Full Stack Developer (MERN)
+
 
