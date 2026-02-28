@@ -3,8 +3,9 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
+import "./BookDetails.css";
 
-// ✅ Production Backend URL
+/* 🔥 PRODUCTION BACKEND URL */
 const API = "https://bookstore-management-system-6qhx.onrender.com";
 
 export default function BookDetails() {
@@ -14,25 +15,38 @@ export default function BookDetails() {
   const [book, setBook] = useState(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch Book Details
+  /* ================================
+     ✅ FETCH BOOK (No ESLint Warning)
+  ================================= */
   useEffect(() => {
     const fetchBook = async () => {
       try {
         const res = await axios.get(`${API}/api/books/${id}`);
         setBook(res.data);
-      } catch {
+      } catch (err) {
+        console.error("Fetch error:", err);
         toast.error("Failed to load book");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchBook();
   }, [id]);
 
-  // ✅ Submit Review
+  /* ================================
+     ✅ SUBMIT REVIEW
+  ================================= */
   const submitReview = async () => {
     if (!token) {
-      toast.error("Login to add review");
+      toast.error("Please login to add review");
+      return;
+    }
+
+    if (!comment.trim()) {
+      toast.error("Review cannot be empty");
       return;
     }
 
@@ -45,69 +59,94 @@ export default function BookDetails() {
         }
       );
 
-      toast.success("Review added successfully");
+      toast.success("Review added successfully 🎉");
       setComment("");
 
       // Refresh book data
       const res = await axios.get(`${API}/api/books/${id}`);
       setBook(res.data);
+
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add review");
+      console.error("Submit review error:", err);
+      toast.error(
+        err.response?.data?.message || "Failed to add review"
+      );
     }
   };
 
-  if (!book) return <p>Loading...</p>;
+  if (loading) return <p className="loading">Loading...</p>;
+  if (!book) return <p className="loading">Book not found</p>;
 
   return (
-    <div>
+    <div className="book-details-page">
       <Navbar />
 
-      <div style={{ padding: 20 }}>
-        <h2>{book.title}</h2>
-        <p>By {book.author}</p>
-        <p>⭐ {book.avgRating?.toFixed(1) || "0.0"} / 5</p>
+      <div className="book-container">
+        {/* LEFT SIDE */}
+        <div className="book-image-section">
+          <img src={book.image} alt={book.title} />
+        </div>
 
-        <h3>Reviews</h3>
+        {/* RIGHT SIDE */}
+        <div className="book-info-section">
+          <h1>{book.title}</h1>
+          <p className="author">By {book.author}</p>
 
-        {book.reviews.length === 0 && <p>No reviews yet.</p>}
-
-        {book.reviews.map((r, i) => (
-          <div key={i} style={{ marginBottom: 10 }}>
-            <strong>{r.name}</strong> ⭐ {r.rating}
-            <p>{r.comment}</p>
+          <div className="rating">
+            ⭐ {book.avgRating?.toFixed(1) || "0.0"} / 5
           </div>
-        ))}
 
-        <h3>Add Review</h3>
+          <div className="price">₹{book.price}</div>
 
-        <select
-          value={rating}
-          onChange={(e) => setRating(Number(e.target.value))}
-        >
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
+          <div className="stock">
+            {book.stock > 0 ? "In Stock ✅" : "Out of Stock ❌"}
+          </div>
 
-        <br />
-        <br />
+          {/* REVIEWS */}
+          <div className="review-section">
+            <h3>Customer Reviews</h3>
 
-        <textarea
-          placeholder="Write a review..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          rows={4}
-          style={{ width: "100%", maxWidth: 400 }}
-        />
+            {!book.reviews || book.reviews.length === 0 ? (
+              <p className="no-review">No reviews yet.</p>
+            ) : (
+              book.reviews.map((r, i) => (
+                <div key={i} className="review-card">
+                  <div className="review-header">
+                    <strong>{r.name}</strong>
+                    <span>⭐ {r.rating}</span>
+                  </div>
+                  <p>{r.comment}</p>
+                </div>
+              ))
+            )}
 
-        <br />
-        <br />
+            {/* ADD REVIEW */}
+            <div className="add-review">
+              <h4>Add Your Review</h4>
 
-        <button onClick={submitReview}>
-          Submit Review
-        </button>
+              <select
+                value={rating}
+                onChange={(e) => setRating(Number(e.target.value))}
+              >
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>
+                    {n} Stars
+                  </option>
+                ))}
+              </select>
+
+              <textarea
+                placeholder="Write your review..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+
+              <button onClick={submitReview}>
+                Submit Review
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
